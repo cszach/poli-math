@@ -1,14 +1,11 @@
 //! WebGPU-friendly 3D graphics math library.
 //!
 //! This library supports math operations for matrix transformations, rotations,
-//! and colors. It respects the [WebGPU coordinate systems][coordinate systems].
-//! It supports all compilation targets, including WebAssembly.
+//! and colors. It supports all compilation targets, including WebAssembly.
 //!
 //! This library uses C-style layout for types. This allows quantites such as
 //! matrices and vectors to be written to GPU buffers and passed to shaders
 //! correctly.
-//!
-//! [coordinate systems]: https://www.w3.org/TR/webgpu/#coordinate-systems
 
 #[macro_use]
 extern crate impl_ops;
