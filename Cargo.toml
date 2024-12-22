@@ -2,7 +2,7 @@
 name = "poli-math"
 version = "0.1.0"
 edition = "2021"
-description = "🔢 3D graphics math library for WebGPU written in Rust."
+description = "🔢 3D graphics math library written in Rust."
 
 [dependencies]
 bytemuck = { version = "1.20.0", features = ["derive"] }
