@@ -1,6 +1,6 @@
 # poli-math
 
-![Rust workflow badge](https://github.com/cszach/poli-math/workflows/rust/badge.svg)
+![Rust workflow badge](https://github.com/cszach/poli-math/actions/workflows/rust.yml/badge.svg)
 
 3D graphics math library written in Rust. Use it with [wgpu][wgpu] or any other
 Rust graphics application.
