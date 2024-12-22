@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"bytemuck":[],
+"poli_math":[["impl <a class=\"trait\" href=\"bytemuck/zeroable/trait.Zeroable.html\" title=\"trait bytemuck::zeroable::Zeroable\">Zeroable</a> for <a class=\"struct\" href=\"poli_math/struct.Matrix3.html\" title=\"struct poli_math::Matrix3\">Matrix3</a>"],["impl <a class=\"trait\" href=\"bytemuck/zeroable/trait.Zeroable.html\" title=\"trait bytemuck::zeroable::Zeroable\">Zeroable</a> for <a class=\"struct\" href=\"poli_math/struct.Matrix4.html\" title=\"struct poli_math::Matrix4\">Matrix4</a>"],["impl <a class=\"trait\" href=\"bytemuck/zeroable/trait.Zeroable.html\" title=\"trait bytemuck::zeroable::Zeroable\">Zeroable</a> for <a class=\"struct\" href=\"poli_math/struct.Vector3.html\" title=\"struct poli_math::Vector3\">Vector3</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

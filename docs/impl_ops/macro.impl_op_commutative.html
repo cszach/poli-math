@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Overloads a binary operator commutatively using the given closure as its body."><title>impl_op_commutative in impl_ops - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="impl_ops" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../impl_ops/index.html">impl_ops</a><span class="version">0.1.1</span></h2></div><div class="sidebar-elems"></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Macro <a href="index.html">impl_ops</a>::<wbr><a class="macro" href="#">impl_op_commutative</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/impl_ops/lib.rs.html#294-311">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> impl_op_commutative {
+    (<span class="macro-nonterminal">$op</span>:tt |<span class="macro-nonterminal">$lhs_i</span>:ident : <span class="kw-2">&amp;</span><span class="macro-nonterminal">$lhs</span>:path, <span class="macro-nonterminal">$rhs_i</span>:ident : <span class="kw-2">&amp;</span><span class="macro-nonterminal">$rhs</span>:path| -&gt; <span class="macro-nonterminal">$out</span>:path <span class="macro-nonterminal">$body</span>:block) =&gt; { ... };
+    (<span class="macro-nonterminal">$op</span>:tt |<span class="macro-nonterminal">$lhs_i</span>:ident : <span class="kw-2">&amp;</span><span class="macro-nonterminal">$lhs</span>:path, <span class="macro-nonterminal">$rhs_i</span>:ident : <span class="macro-nonterminal">$rhs</span>:path| -&gt; <span class="macro-nonterminal">$out</span>:path <span class="macro-nonterminal">$body</span>:block) =&gt; { ... };
+    (<span class="macro-nonterminal">$op</span>:tt |<span class="macro-nonterminal">$lhs_i</span>:ident : <span class="macro-nonterminal">$lhs</span>:path, <span class="macro-nonterminal">$rhs_i</span>:ident : <span class="kw-2">&amp;</span><span class="macro-nonterminal">$rhs</span>:path| -&gt; <span class="macro-nonterminal">$out</span>:path <span class="macro-nonterminal">$body</span>:block) =&gt; { ... };
+    (<span class="macro-nonterminal">$op</span>:tt |<span class="macro-nonterminal">$lhs_i</span>:ident : <span class="macro-nonterminal">$lhs</span>:path, <span class="macro-nonterminal">$rhs_i</span>:ident : <span class="macro-nonterminal">$rhs</span>:path| -&gt; <span class="macro-nonterminal">$out</span>:path <span class="macro-nonterminal">$body</span>:block) =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Overloads a binary operator commutatively using the given closure as its body.</p>
+<p>Used with the same syntax as <code>impl_op!</code> (see the <a href="index.html">module level documentation</a> for more information).
+Can only be used with binary operators, and the operation must be between two different types.</p>
+<p>An operator is commutative if A <op> B == B <op> A. Common commutative operators are <code>+</code> and <code>*</code>.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">impl_op_commutative!</span>(op |a: LHS, b: RHS| -&gt; OUT {...});
+<span class="comment">// where LHS != RHS</span></code></pre></div>
+<p>gets expanded to</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">impl_op!</span>(op |a: LHS, b: RHS| -&gt; OUT {...});
+<span class="macro">impl_op!</span>(op |a: RHS, b: LHS| -&gt; OUT {...});</code></pre></div>
+<p>Make sure that LHS != RHS, and that the operator you are trying to overload is a commutative one.
+See the examples for what happens when you try <code>impl_op_commutative!</code> on the <code>-</code> operator (which isn’t usually commutative).</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use] </span><span class="kw">extern crate </span>impl_ops;
+<span class="kw">use </span>std::ops;
+
+<span class="macro">impl_op_commutative!</span>(+ |a: DonkeyKong, b: i32| -&gt; i32 { a.bananas + b });
+<span class="comment">// Don't do this unless you know what you are doing:
+</span><span class="macro">impl_op_commutative!</span>(- |a: DonkeyKong, b: i32| -&gt; i32 { a.bananas - b });
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>total_bananas = DonkeyKong::new(<span class="number">5</span>) + <span class="number">1</span>;
+    <span class="macro">assert_eq!</span>(<span class="number">6</span>, total_bananas);
+    <span class="kw">let </span>total_bananas = <span class="number">1 </span>+ DonkeyKong::new(<span class="number">5</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">6</span>, total_bananas);
+    <span class="kw">let </span>total_bananas = DonkeyKong::new(<span class="number">5</span>) - <span class="number">1</span>;
+    <span class="macro">assert_eq!</span>(<span class="number">4</span>, total_bananas);
+    <span class="kw">let </span>total_bananas = <span class="number">1 </span>- DonkeyKong::new(<span class="number">5</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">4</span>, total_bananas);
+    <span class="comment">// notice that in this case (5 - 1 == 4) and (1 - 5 == 1): that is the definition of a 
+    // commutative operator, but probably not what you want for the '-' operator
+</span>}</code></pre></div>
+</div></details></section></div></main></body></html>

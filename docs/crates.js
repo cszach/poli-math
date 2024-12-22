@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["bytemuck","bytemuck_derive","impl_ops","poli_math","proc_macro2","quote","syn","unicode_ident"];

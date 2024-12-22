@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Macros for easy operator overloading."><title>impl_ops - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="impl_ops" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../impl_ops/index.html">impl_ops</a><span class="version">0.1.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#macros">Macros</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">impl_ops</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/impl_ops/lib.rs.html#1-417">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Macros for easy operator overloading.</p>
+<p>The primary macro to learn is <code>impl_op!(&lt;op&gt; &lt;closure&gt;);</code>
+where <code>&lt;op&gt;</code> is an operator and <code>&lt;closure&gt;</code> is a closure with the same signature as the trait function associated with <code>&lt;op&gt;</code>.
+The macro you’ll actually want to use most of the time, however, is <a href="macro.impl_op_ex.html"><code>impl_op_ex!</code></a>. It works the same way as <code>impl_op!</code> but with some extra magic behind the scenes.</p>
+<p>To use, include <code>#[macro_use] extern crate impl_ops;</code> in your crate and <code>use std::ops;</code> in your module. Remember that you can only overload operators between one or more types defined in the current crate.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>All of the following examples are run with the following struct defined:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Debug, PartialEq)]
+</span><span class="kw">struct </span>DonkeyKong {
+    <span class="kw">pub </span>bananas: i32,
+}
+<span class="kw">impl </span>DonkeyKong {
+    <span class="kw">pub fn </span>new(bananas: i32) -&gt; DonkeyKong {
+        DonkeyKong { bananas: bananas }
+    }
+}</code></pre></div>
+<h3 id="binary-operators"><a class="doc-anchor" href="#binary-operators">§</a>Binary operators</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// impl_op!(op |a: LHS, b: RHS| -&gt; OUT {...});
+// impl_op!(op |a: LHS, b: &amp;RHS| -&gt; OUT {...});
+// impl_op!(op |a: &amp;LHS, b: RHS| -&gt; OUT {...});
+// impl_op!(op |a: &amp;LHS, b: &amp;RHS| -&gt; OUT {...});
+// where
+// OP  : +, -, *, /, %, &amp;, |, ^, &lt;&lt;, &gt;&gt;
+// a, b: variable names
+ 
+</span><span class="attr">#[macro_use] </span><span class="kw">extern crate </span>impl_ops;
+<span class="kw">use </span>std::ops;
+
+<span class="macro">impl_op!</span>(- |a: DonkeyKong, b: i32| -&gt; DonkeyKong { DonkeyKong::new(a.bananas - b) });
+<span class="macro">impl_op!</span>(+ |a: <span class="kw-2">&amp;</span>DonkeyKong, b: <span class="kw-2">&amp;</span>DonkeyKong| -&gt; i32 { a.bananas + b.bananas });
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>dk = DonkeyKong::new(<span class="number">3</span>) - <span class="number">1</span>;
+    <span class="macro">assert_eq!</span>(DonkeyKong::new(<span class="number">2</span>), dk);
+    <span class="kw">let </span>total_bananas = <span class="kw-2">&amp;</span>dk + <span class="kw-2">&amp;</span>DonkeyKong::new(<span class="number">4</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">6</span>, total_bananas);
+}</code></pre></div>
+<h3 id="assignment-operators"><a class="doc-anchor" href="#assignment-operators">§</a>Assignment operators</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// impl_op!(OP |a: &amp;mut LHS, b: RHS| {...});
+// impl_op!(op |a: &amp;mut LHS, b: &amp;RHS| {...})
+// where
+// op  : +=, -=, *=, /=, %=, &amp;=, |=, ^=, &lt;&lt;=, &gt;&gt;=
+// a, b: variable names
+ 
+</span><span class="attr">#[macro_use] </span><span class="kw">extern crate </span>impl_ops;
+<span class="kw">use </span>std::ops;
+
+<span class="macro">impl_op!</span>(+= |a: <span class="kw-2">&amp;mut </span>DonkeyKong, b: DonkeyKong| { a.bananas += b.bananas });
+<span class="macro">impl_op!</span>(+= |a: <span class="kw-2">&amp;mut </span>DonkeyKong, b: <span class="kw-2">&amp;</span>DonkeyKong| { a.bananas += b.bananas });
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span><span class="kw-2">mut </span>dk = DonkeyKong::new(<span class="number">3</span>);
+    dk += DonkeyKong::new(<span class="number">1</span>);
+    <span class="macro">assert_eq!</span>(DonkeyKong::new(<span class="number">4</span>), dk);
+    dk += <span class="kw-2">&amp;</span>DonkeyKong::new(<span class="number">1</span>);
+    <span class="macro">assert_eq!</span>(DonkeyKong::new(<span class="number">5</span>), dk);
+}</code></pre></div>
+<h3 id="unary-operators"><a class="doc-anchor" href="#unary-operators">§</a>Unary operators</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// impl_op!(OP |a: LHS| -&gt; OUT {...});
+// impl_op!(op |a: &amp;LHS| -&gt; OUT {...})
+// where
+// OP: !, -
+// a : variable name
+
+</span><span class="attr">#[macro_use] </span><span class="kw">extern crate </span>impl_ops;
+<span class="kw">use </span>std::ops;
+
+<span class="macro">impl_op!</span>(- |a: DonkeyKong| -&gt; DonkeyKong { DonkeyKong::new(-a.bananas) });
+<span class="macro">impl_op!</span>(- |a: <span class="kw-2">&amp;</span>DonkeyKong| -&gt; DonkeyKong { DonkeyKong::new(-a.bananas) });
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>dk = -DonkeyKong::new(<span class="number">3</span>);
+    <span class="macro">assert_eq!</span>(DonkeyKong::new(-<span class="number">3</span>), dk);
+    <span class="macro">assert_eq!</span>(DonkeyKong::new(<span class="number">3</span>), -<span class="kw-2">&amp;</span>dk);
+}</code></pre></div>
+<h2 id="limitations"><a class="doc-anchor" href="#limitations">§</a>Limitations</h2>
+<ul>
+<li>The output type of any operation must be an owned type (i.e. <code>impl_op!(+ |a: DonkeyKong b: i32| -&gt; &amp;DonkeyKong {...})</code> is invalid).</li>
+<li>Types that have an unqualified lifetime or associated type are invalid</li>
+</ul>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="comment">// impl_op!(+ |a: SomeType&lt;'a&gt;, b: SomeType&lt;'a&gt;| -&gt; SomeType&lt;'a&gt; {...}) // INVALID
+// impl_op!(+ |a: SomeType&lt;T&gt;, b: SomeType&lt;T&gt;| -&gt; SomeType&lt;T&gt; {...})    // INVALID
+</span><span class="macro">impl_op!</span>(+ |a: SomeType&lt;i32&gt;, b: SomeType&lt;i32&gt;| -&gt; SomeType&lt;i32&gt; {...}) <span class="comment">// VALID</span></code></pre></div>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.impl_op.html" title="macro impl_ops::impl_op">impl_op</a></div><div class="desc docblock-short">Overloads an operator using the given closure as its body.</div></li><li><div class="item-name"><a class="macro" href="macro.impl_op_commutative.html" title="macro impl_ops::impl_op_commutative">impl_op_commutative</a></div><div class="desc docblock-short">Overloads a binary operator commutatively using the given closure as its body.</div></li><li><div class="item-name"><a class="macro" href="macro.impl_op_ex.html" title="macro impl_ops::impl_op_ex">impl_op_ex</a></div><div class="desc docblock-short">Overloads an operator using the given closure as its body. Generates overloads for both owned and borrowed variants where possible.</div></li><li><div class="item-name"><a class="macro" href="macro.impl_op_ex_commutative.html" title="macro impl_ops::impl_op_ex_commutative">impl_op_ex_commutative</a></div><div class="desc docblock-short">Overloads a binary operator commutatively using the given closure as its body. Generates overloads for both owned and borrowed variants where possible.</div></li></ul></section></div></main></body></html>

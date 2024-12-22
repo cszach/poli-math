@@ -1,0 +1,1 @@
+searchState.loadedDescShard("impl_ops", 0, "Macros for easy operator overloading.\nOverloads an operator using the given closure as its body.\nOverloads a binary operator commutatively using the given …\nOverloads an operator using the given closure as its body. …\nOverloads a binary operator commutatively using the given …")

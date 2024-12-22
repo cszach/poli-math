@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["impl_op","impl_op_commutative","impl_op_ex","impl_op_ex_commutative"]};
