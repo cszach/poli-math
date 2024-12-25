@@ -143,12 +143,6 @@ impl From<&Euler> for Quaternion {
     }
 }
 
-impl From<Euler> for Quaternion {
-    fn from(euler: Euler) -> Self {
-        (&euler).into()
-    }
-}
-
 impl_op_ex!(*|a: &Quaternion, b: &Quaternion| -> Quaternion {
     Quaternion {
         w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
@@ -212,7 +206,7 @@ impl Quaternion {
             x: -self.x,
             y: -self.y,
             z: -self.z,
-            w: self.x,
+            w: self.w,
         }
     }
 
@@ -222,5 +216,98 @@ impl Quaternion {
         *self = self.conjugate();
 
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::f32;
+
+    use super::*;
+    use assert_float_eq::assert_float_absolute_eq;
+
+    #[test]
+    fn test_from_axis_angle() {
+        let zero = Quaternion::default();
+
+        let a = Quaternion::from_axis_angle(&(1.0, 0.0, 0.0).into(), 0.0);
+        assert_eq!(a, zero);
+        let a = Quaternion::from_axis_angle(&(0.0, 1.0, 0.0).into(), 0.0);
+        assert_eq!(a, zero);
+        let a = Quaternion::from_axis_angle(&(0.0, 0.0, 1.0).into(), 0.0);
+        assert_eq!(a, zero);
+
+        let b1 = Quaternion::from_axis_angle(&(1.0, 0.0, 0.0).into(), f32::consts::PI);
+        assert_ne!(a, b1);
+        let b2 = Quaternion::from_axis_angle(&(1.0, 0.0, 0.0).into(), -f32::consts::PI);
+        assert_ne!(a, b2);
+
+        assert_eq!(a, b1 * b2);
+    }
+
+    #[test]
+    fn test_set() {
+        let mut a = Quaternion::default();
+
+        assert_eq!(a.x, 0.0);
+        assert_eq!(a.y, 0.0);
+        assert_eq!(a.z, 0.0);
+        assert_eq!(a.w, 1.0);
+
+        a.set(1.0, 2.0, 3.0, 4.0);
+
+        assert_eq!(a.x, 1.0);
+        assert_eq!(a.y, 2.0);
+        assert_eq!(a.z, 3.0);
+        assert_eq!(a.w, 4.0);
+    }
+
+    #[test]
+    fn test_norm_and_normalize() {
+        let mut a = Quaternion {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 4.0,
+        };
+
+        assert_ne!(a.norm(), 1.0);
+        a.normalize();
+        assert_float_absolute_eq!(a.norm(), 1.0);
+    }
+
+    #[test]
+    fn test_conjugate() {
+        let a = Quaternion {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 4.0,
+        };
+
+        let b = a.conjugate();
+
+        assert_eq!(a.x, -b.x);
+        assert_eq!(a.y, -b.y);
+        assert_eq!(a.z, -b.z);
+        assert_eq!(a.w, b.w);
+    }
+
+    #[test]
+    fn test_invert() {
+        let a = Quaternion {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 4.0,
+        };
+
+        let mut b = a.clone();
+        b.invert();
+
+        assert_eq!(a.x, -b.x);
+        assert_eq!(a.y, -b.y);
+        assert_eq!(a.z, -b.z);
+        assert_eq!(a.w, b.w);
     }
 }
