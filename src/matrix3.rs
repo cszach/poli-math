@@ -111,7 +111,7 @@ impl Matrix3 {
         n11: f32, n12: f32, n13: f32,
         n21: f32, n22: f32, n23: f32,
         n31: f32, n32: f32, n33: f32,
-    ) -> &Self {
+    ) {
         self.elements[0] = n11;
         self.elements[1] = n21;
         self.elements[2] = n31;
@@ -121,8 +121,6 @@ impl Matrix3 {
         self.elements[6] = n13;
         self.elements[7] = n23;
         self.elements[8] = n33;
-
-        self
     }
 
     /// Returns the normal matrix for the given transformation matrix, which is

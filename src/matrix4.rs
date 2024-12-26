@@ -462,7 +462,7 @@ impl Matrix4 {
         n21: f32, n22: f32, n23: f32, n24: f32,
         n31: f32, n32: f32, n33: f32, n34: f32,
         n41: f32, n42: f32, n43: f32, n44: f32,
-    ) -> &Self {
+    ) {
         self.elements[0] = n11;
         self.elements[1] = n21;
         self.elements[2] = n31;
@@ -479,8 +479,6 @@ impl Matrix4 {
         self.elements[13] = n24;
         self.elements[14] = n34;
         self.elements[15] = n44;
-
-        self
     }
 
     /// Returns the translation component of this matrix.
@@ -493,26 +491,20 @@ impl Matrix4 {
     }
 
     /// Translates by the given vector.
-    pub fn translate(&mut self, v: &Vector3) -> &Self {
+    pub fn translate(&mut self, v: &Vector3) {
         *self *= Self::from_translation(v);
-
-        self
     }
 
     /// Applies the given rotation quaternion.
     ///
     /// If you have Euler angles, you can use [`Quaternion::from`].
-    pub fn rotate(&mut self, q: &Quaternion) -> &Self {
+    pub fn rotate(&mut self, q: &Quaternion) {
         *self *= &Self::from_quaternion(q);
-
-        self
     }
 
     /// Scales by the given scale factor.
-    pub fn scale(&mut self, v: &Vector3) -> &Self {
+    pub fn scale(&mut self, v: &Vector3) {
         *self *= &Self::from_scale(v);
-
-        self
     }
 
     /// Returns the determinant of this matrix.

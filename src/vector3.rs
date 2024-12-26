@@ -181,12 +181,10 @@ impl_op_ex!(-|v: &Vector3| -> Vector3 {
 
 impl Vector3 {
     /// Sets the elements of this vector.
-    pub fn set(&mut self, x: f32, y: f32, z: f32) -> &Self {
+    pub fn set(&mut self, x: f32, y: f32, z: f32) {
         self.x = x;
         self.y = y;
         self.z = z;
-
-        self
     }
 
     /// Returns the length of this vector.
@@ -195,14 +193,12 @@ impl Vector3 {
     }
 
     /// Normalizes this vector.
-    pub fn normalize(&mut self) -> &Self {
+    pub fn normalize(&mut self) {
         let length = self.length();
 
         self.x /= length;
         self.y /= length;
         self.z /= length;
-
-        self
     }
 
     /// Returns the normalized version of this vector.

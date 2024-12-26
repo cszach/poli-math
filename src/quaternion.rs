@@ -172,13 +172,11 @@ impl Quaternion {
     }
 
     /// Sets the x, y, z, and w properties.
-    pub fn set(&mut self, x: f32, y: f32, z: f32, w: f32) -> &Self {
+    pub fn set(&mut self, x: f32, y: f32, z: f32, w: f32) {
         self.x = x;
         self.y = y;
         self.z = z;
         self.w = w;
-
-        self
     }
 
     /// Returns the norm. The norm of a quaternion has no inherent geometric
@@ -188,15 +186,13 @@ impl Quaternion {
     }
 
     /// Normalizes this quaternion.
-    pub fn normalize(&mut self) -> &Self {
+    pub fn normalize(&mut self) {
         let norm = self.norm();
 
         self.w /= norm;
         self.x /= norm;
         self.y /= norm;
         self.z /= norm;
-
-        self
     }
 
     /// Returns the conjugate. The conjugate represents the same rotation in the
@@ -212,10 +208,8 @@ impl Quaternion {
 
     /// Inverts this quaternion using the conjugate. If this is a rotation
     /// quaternion, this effectively reverses the rotation.
-    pub fn invert(&mut self) -> &Self {
+    pub fn invert(&mut self) {
         *self = self.conjugate();
-
-        self
     }
 }
 
