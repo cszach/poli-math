@@ -1,5 +1,7 @@
 use std::ops;
 
+use crate::Vector3;
+
 use super::Matrix4;
 
 /// 3x3 matrix.
@@ -16,7 +18,31 @@ pub struct Matrix3 {
 unsafe impl Send for Matrix3 {}
 unsafe impl Sync for Matrix3 {}
 
+impl Default for Matrix3 {
+    fn default() -> Self {
+        Self::identity()
+    }
+}
+
 impl Eq for Matrix3 {}
+
+impl_op_ex!(*|a: &Matrix3, b: &Vector3| -> Vector3 {
+    let a11 = a.elements[0];
+    let a21 = a.elements[1];
+    let a31 = a.elements[2];
+    let a12 = a.elements[3];
+    let a22 = a.elements[4];
+    let a32 = a.elements[5];
+    let a13 = a.elements[6];
+    let a23 = a.elements[7];
+    let a33 = a.elements[8];
+
+    Vector3 {
+        x: a11 * b.x + a12 * b.y + a13 * b.z,
+        y: a21 * b.x + a22 * b.y + a23 * b.z,
+        z: a31 * b.x + a32 * b.y + a33 * b.z,
+    }
+});
 
 impl_op_ex_commutative!(/|a: &Matrix3, b: &f32| -> Matrix3 {
     Matrix3 {
@@ -41,6 +67,23 @@ impl Matrix3 {
                 n13, n23, n33
             ],
         }
+    }
+
+    /// Returns the 3x3 identity matrix.
+    pub fn identity() -> Self {
+        Matrix3 {
+            #[rustfmt::skip]
+            elements: [
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0
+            ],
+        }
+    }
+
+    /// Returns the 3x3 zero matrix.
+    pub fn zero() -> Self {
+        Matrix3 { elements: [0.0; 9] }
     }
 
     /// Returns the top-left 3x3 matrix of the given 4x4 matrix.
@@ -80,23 +123,6 @@ impl Matrix3 {
         self.elements[8] = n33;
 
         self
-    }
-
-    /// Returns the 3x3 identity matrix.
-    pub fn identity() -> Self {
-        Matrix3 {
-            #[rustfmt::skip]
-            elements: [
-                1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0
-            ],
-        }
-    }
-
-    /// Returns the 3x3 zero matrix.
-    pub fn zero() -> Self {
-        Matrix3 { elements: [0.0; 9] }
     }
 
     /// Returns the normal matrix for the given transformation matrix, which is
@@ -145,7 +171,8 @@ impl Matrix3 {
         }
     }
 
-    /// Returns the adjugate of this matrix.
+    /// Returns the adjugate of this matrix, also known as the classical adjoint
+    /// or the adjunct.
     pub fn adjugate(&self) -> Self {
         let n11 = self.elements[0];
         let n21 = self.elements[1];
@@ -189,6 +216,8 @@ impl Matrix3 {
 
 #[cfg(test)]
 mod tests {
+    use assert_float_eq::assert_float_absolute_eq;
+
     use super::*;
 
     /// Converts the given column-major index to its row-major equivalent.
@@ -200,7 +229,12 @@ mod tests {
     }
 
     #[test]
-    fn new() {
+    fn test_default() {
+        assert_eq!(Matrix3::default(), Matrix3::identity());
+    }
+
+    #[test]
+    fn test_new() {
         #[rustfmt::skip]
         let m = Matrix3::new(
             1.0, 2.0, 3.0,
@@ -214,7 +248,45 @@ mod tests {
     }
 
     #[test]
-    fn set() {
+    fn test_identity() {
+        let m = Matrix3::identity();
+
+        for i in 0..9 {
+            assert_eq!(m.elements[i], if i % 4 == 0 { 1.0 } else { 0.0 });
+        }
+    }
+
+    #[test]
+    fn test_zero() {
+        let m = Matrix3::zero();
+
+        for i in 0..9 {
+            assert_eq!(m.elements[i], 0.0);
+        }
+    }
+
+    #[test]
+    fn test_from_matrix4() {
+        #[rustfmt::skip]
+        let m4 = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
+
+        let m3 = Matrix3::from_matrix4(&m4);
+
+        assert_eq!(
+            m3,
+            Matrix3 {
+                elements: [1.0, 5.0, 9.0, 2.0, 6.0, 10.0, 3.0, 7.0, 11.0]
+            }
+        );
+    }
+
+    #[test]
+    fn test_set() {
         #[rustfmt::skip]
         let mut m = Matrix3::new(
             1.0, 2.0, 3.0,
@@ -235,50 +307,37 @@ mod tests {
     }
 
     #[test]
-    fn copy() {
+    fn test_normal() {
         #[rustfmt::skip]
-        let mut a = Matrix3::new(
-            1.0, 2.0, 3.0,
-            4.0, 5.0, 6.0,
-            7.0, 8.0, 9.0,
+        let m = Matrix4::new(
+            1.0, 2.0, 3.0, 3.0,
+            0.0, 1.0, 4.0, 4.0,
+            5.0, 6.0, 0.0, 5.0,
+            6.0, 7.0, 8.0, 9.0
         );
 
+        let actual = Matrix3::normal_matrix(&m);
+
         #[rustfmt::skip]
-        let b = Matrix3::new(
-            10.0, 11.0, 12.0,
-            13.0, 14.0, 15.0,
-            16.0, 17.0, 18.0,
+        let expected = Matrix3::new(
+            -24.0, 18.0, 5.0,
+            20.0, -15.0, -4.0,
+            -5.0, 4.0, 1.0
         );
 
-        a.copy(&b);
-
-        for i in 0..9 {
-            assert_eq!(a.elements[i], (cm_to_rm(i) + 10) as f32);
-        }
+        assert_float_absolute_eq!(actual.elements[0], expected.elements[0]);
+        assert_float_absolute_eq!(actual.elements[1], expected.elements[1]);
+        assert_float_absolute_eq!(actual.elements[2], expected.elements[2]);
+        assert_float_absolute_eq!(actual.elements[3], expected.elements[3]);
+        assert_float_absolute_eq!(actual.elements[4], expected.elements[4]);
+        assert_float_absolute_eq!(actual.elements[5], expected.elements[5]);
+        assert_float_absolute_eq!(actual.elements[6], expected.elements[6]);
+        assert_float_absolute_eq!(actual.elements[7], expected.elements[7]);
+        assert_float_absolute_eq!(actual.elements[8], expected.elements[8]);
     }
 
     #[test]
-    fn identity() {
-        let m = Matrix3::identity();
-
-        for i in 0..9 {
-            assert_eq!(m.elements[i], if i % 4 == 0 { 1.0 } else { 0.0 });
-        }
-    }
-
-    #[test]
-    fn zero() {
-        let m = Matrix3::zero();
-
-        for i in 0..9 {
-            assert_eq!(m.elements[i], 0.0);
-        }
-    }
-
-    // TODO: normal_matrix
-
-    #[test]
-    fn determinant() {
+    fn test_determinant() {
         let mut m = Matrix3::identity();
         assert_eq!(m.determinant(), 1.0);
 
@@ -298,22 +357,53 @@ mod tests {
     }
 
     #[test]
-    fn transpose() {
+    fn test_transpose() {
         #[rustfmt::skip]
         let m = Matrix3::new(
             1.0, 2.0, 3.0,
             4.0, 5.0, 6.0,
             7.0, 8.0, 9.0
         );
-        let expected = Matrix3 {
-            elements: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
-        };
 
-        assert_eq!(m.transpose(), expected);
+        assert_eq!(
+            m.transpose(),
+            Matrix3 {
+                elements: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            }
+        );
     }
 
     #[test]
-    fn inverse() {
+    fn test_adjugate() {
+        #[rustfmt::skip]
+        let m = Matrix3::new(
+            1.0, 2.0, 3.0,
+            0.0, 1.0, 4.0,
+            5.0, 6.0, 0.0
+        );
+
+        let actual = m.adjugate();
+
+        #[rustfmt::skip]
+        let expected = Matrix3::new(
+            -24.0, 18.0, 5.0,
+            20.0, -15.0, -4.0,
+            -5.0, 4.0, 1.0
+        );
+
+        assert_float_absolute_eq!(actual.elements[0], expected.elements[0]);
+        assert_float_absolute_eq!(actual.elements[1], expected.elements[1]);
+        assert_float_absolute_eq!(actual.elements[2], expected.elements[2]);
+        assert_float_absolute_eq!(actual.elements[3], expected.elements[3]);
+        assert_float_absolute_eq!(actual.elements[4], expected.elements[4]);
+        assert_float_absolute_eq!(actual.elements[5], expected.elements[5]);
+        assert_float_absolute_eq!(actual.elements[6], expected.elements[6]);
+        assert_float_absolute_eq!(actual.elements[7], expected.elements[7]);
+        assert_float_absolute_eq!(actual.elements[8], expected.elements[8]);
+    }
+
+    #[test]
+    fn test_inverse() {
         #[rustfmt::skip]
         let m = Matrix3::new(
             1.0, 2.0, 3.0,
