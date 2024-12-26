@@ -206,8 +206,6 @@ impl Vector3 {
     }
 
     /// Returns the normalized version of this vector.
-    ///
-    /// Note that this does not modify this vector.
     pub fn normalized(&self) -> Self {
         let length = self.length();
 
@@ -218,13 +216,12 @@ impl Vector3 {
         }
     }
 
+    /// Returns the dot product of this vector with another vector.
     pub fn dot(&self, rhs: &Self) -> f32 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
     /// Returns the cross product of this vector with another vector.
-    ///
-    /// Note that this does not modify this vector.
     pub fn cross(&self, rhs: &Self) -> Self {
         Self {
             x: self.y * rhs.z - self.z * rhs.y,
