@@ -82,13 +82,6 @@ impl Matrix3 {
         self
     }
 
-    /// Copies the elements from another matrix into this matrix.
-    pub fn copy(&mut self, m: &Self) -> &Self {
-        self.elements.copy_from_slice(&m.elements);
-
-        self
-    }
-
     /// Returns the 3x3 identity matrix.
     pub fn identity() -> Self {
         Matrix3 {
