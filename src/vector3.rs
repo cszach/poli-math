@@ -230,3 +230,135 @@ impl Vector3 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_float_eq::assert_float_absolute_eq;
+
+    use super::*;
+
+    #[test]
+    fn test_set() {
+        let mut v = Vector3::default();
+
+        v.set(1.0, 2.0, 3.0);
+
+        assert_eq!(v.x, 1.0);
+        assert_eq!(v.y, 2.0);
+        assert_eq!(v.z, 3.0);
+    }
+
+    #[test]
+    fn test_length() {
+        let v = Vector3 {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        };
+
+        let expected = (2.0f32 * 2.0 + 3.0 * 3.0 + 4.0 * 4.0).sqrt();
+
+        assert_float_absolute_eq!(v.length(), expected);
+    }
+
+    #[test]
+    fn test_normalize() {
+        let test_values = [
+            Vector3 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            Vector3 {
+                x: 0.0,
+                y: -2.0,
+                z: 0.0,
+            },
+            Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 3.0,
+            },
+        ];
+
+        let expected_values = [
+            Vector3 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            Vector3 {
+                x: 0.0,
+                y: -1.0,
+                z: 0.0,
+            },
+            Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 1.0,
+            },
+        ];
+
+        for i in 0..3 {
+            let mut v = test_values[i];
+            let v_normalized = v.normalized();
+            let expected = expected_values[i];
+
+            assert_float_absolute_eq!(v_normalized.x, expected.x);
+            assert_float_absolute_eq!(v_normalized.y, expected.y);
+            assert_float_absolute_eq!(v_normalized.z, expected.z);
+
+            v.normalize();
+
+            assert_float_absolute_eq!(v.x, expected.x);
+            assert_float_absolute_eq!(v.y, expected.y);
+            assert_float_absolute_eq!(v.z, expected.z);
+        }
+    }
+
+    #[test]
+    fn test_dot() {
+        let a = Vector3 {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        };
+
+        let b = Vector3 {
+            x: -2.0,
+            y: -3.0,
+            z: -4.0,
+        };
+
+        let c = Vector3::default();
+
+        assert_float_absolute_eq!(a.dot(&b), -2.0 * 2.0 - 3.0 * 3.0 - 4.0 * 4.0);
+        assert_float_absolute_eq!(a.dot(&c), 0.0);
+    }
+
+    #[test]
+    fn test_cross() {
+        let a = Vector3 {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        };
+
+        let b = Vector3 {
+            x: 2.0,
+            y: -3.0,
+            z: 4.0,
+        };
+
+        let actual = a.cross(&b);
+        let expected = Vector3 {
+            x: 24.0,
+            y: 0.0,
+            z: -12.0,
+        };
+
+        assert_float_absolute_eq!(actual.x, expected.x);
+        assert_float_absolute_eq!(actual.y, expected.y);
+        assert_float_absolute_eq!(actual.z, expected.z);
+    }
+}
