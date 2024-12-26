@@ -7,21 +7,15 @@ use super::{Euler, Quaternion, Vector3};
 /// 4x4 matrix, commonly used to encode transformations i.e. translation,
 /// rotation, and scale.
 ///
-/// Note that elements are stored in column-major order due to the fact that
-/// the WebGPU Shading Language uses column-major ordering.
-///
 /// ## Supported operators
 ///
-/// All binary operations support matrix and scalar values (except division).
-/// Multiplication is matrix multiplication, not element-wise multiplication;
-/// element-wise multiplication is not supported.
-///
-/// - [`ops::Mul`]
-/// - [`ops::MulAssign`]
-/// - [`ops::Div`]
-/// - [`ops::DivAssign`]
+/// - [`ops::Mul`], [`ops::MulAssign`]
+///   - Matrix multiplication
+///   - Element-wise multiplication by a scalar (commutative)
+/// - [`ops::Div`], [`ops::DivAssign`]
+///   - Element-wise division by a scalar (commutative)
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Matrix4 {
     /// The elements of this matrix in column-major order.
     pub elements: [f32; 16],
@@ -36,8 +30,6 @@ impl Default for Matrix4 {
         Self::identity()
     }
 }
-
-impl Eq for Matrix4 {}
 
 impl AsRef<Matrix4> for Matrix4 {
     fn as_ref(&self) -> &Matrix4 {
@@ -123,7 +115,9 @@ impl_op_ex!(/|a: &Matrix4, b: &f32| -> Matrix4 {
 });
 
 impl_op_ex!(/= |a: &mut Matrix4, b: &f32| {
-    a.elements.map(|x| x / b);
+    a.elements.iter_mut().for_each(|x| {
+        *x /= b;
+    });
 });
 
 impl Matrix4 {
@@ -144,6 +138,26 @@ impl Matrix4 {
                 n13, n23, n33, n43,
                 n14, n24, n34, n44,
             ],
+        }
+    }
+
+    /// Returns the 4x4 identity matrix.
+    pub fn identity() -> Self {
+        Self {
+            #[rustfmt::skip]
+            elements: [
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ],
+        }
+    }
+
+    /// Returns the 4x4 zero matrix.
+    pub fn zero() -> Self {
+        Self {
+            elements: [0.0; 16],
         }
     }
 
@@ -413,28 +427,28 @@ impl Matrix4 {
     /// Returns a rotation matrix looking from `eye` towards `target` oriented
     /// by the `up` vector.
     pub fn look_at(eye: &Vector3, target: &Vector3, up: &Vector3) -> Self {
-        let z_axis = (eye - target).normalized();
-        let x_axis = up.cross(&z_axis).normalized();
-        let y_axis = z_axis.cross(&x_axis).normalized();
+        let z = (eye - target).normalized();
+        let x = up.cross(&z).normalized();
+        let y = z.cross(&x).normalized();
 
         Self {
             elements: [
-                x_axis.x,
-                y_axis.x,
-                z_axis.x,
+                x.x,
+                x.y,
+                x.z,
                 0.0,
-                x_axis.y,
-                y_axis.y,
-                z_axis.y,
+                y.x,
+                y.y,
+                y.z,
                 0.0,
-                x_axis.z,
-                y_axis.z,
-                z_axis.z,
+                z.x,
+                z.y,
+                z.z,
                 0.0,
-                -(x_axis.x * eye.x + x_axis.y * eye.y + x_axis.z * eye.z),
-                -(y_axis.x * eye.x + y_axis.y * eye.y + y_axis.z * eye.z),
-                -(z_axis.x * eye.x + z_axis.y * eye.y + z_axis.z * eye.z),
-                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0
             ],
         }
     }
@@ -469,26 +483,6 @@ impl Matrix4 {
         self
     }
 
-    /// Returns the 4x4 identity matrix.
-    pub fn identity() -> Self {
-        Self {
-            #[rustfmt::skip]
-            elements: [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0,
-            ],
-        }
-    }
-
-    /// Returns the 4x4 zero matrix.
-    pub fn zero() -> Self {
-        Self {
-            elements: [0.0; 16],
-        }
-    }
-
     /// Returns the translation component of this matrix.
     pub fn translation(&self) -> Vector3 {
         Vector3 {
@@ -521,8 +515,7 @@ impl Matrix4 {
         self
     }
 
-    /// Returns the determinant of this matrix. Note that this does not modify
-    /// this matrix.
+    /// Returns the determinant of this matrix.
     ///
     /// The algorithm can be found
     /// [here](http://www.euclideanspace.com/maths/algebra/matrix/functions/determinant/fourD/index.htm).
@@ -638,7 +631,14 @@ impl Matrix4 {
     }
 }
 
+#[cfg(test)]
 mod tests {
+    use core::f32::consts::PI;
+
+    use assert_float_eq::assert_float_absolute_eq;
+
+    use crate::EulerOrder;
+
     use super::*;
 
     /// Converts the given column-major index to its row-major equivalent.
@@ -649,15 +649,23 @@ mod tests {
         i % 4 * 4 + i / 4
     }
 
+    /// Compares if two matrices element-by-element with a tolerance for
+    /// floating-point precision error.
+    fn matrix4_equals(a: Matrix4, b: Matrix4) {
+        for i in 0..16 {
+            assert_float_absolute_eq!(a.elements[i], b.elements[i]);
+        }
+    }
+
     #[test]
-    fn new() {
+    fn test_new() {
         #[rustfmt::skip]
-    let m = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        let m = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
 
         for i in 0..16 {
             assert_eq!(m.elements[i], (cm_to_rm(i) + 1) as f32);
@@ -665,7 +673,170 @@ mod tests {
     }
 
     #[test]
-    fn set() {
+    fn test_identity() {
+        let m = Matrix4::identity();
+
+        for i in 0..16 {
+            assert_eq!(m.elements[i], if i % 5 == 0 { 1.0 } else { 0.0 });
+        }
+    }
+
+    #[test]
+    fn test_zero() {
+        let m = Matrix4::zero();
+
+        for i in 0..16 {
+            assert_eq!(m.elements[i], 0.0);
+        }
+    }
+
+    #[test]
+    fn test_from_translation() {
+        let m = Matrix4::from_translation(&Vector3 {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        });
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1.0, 0.0, 0.0, 2.0,
+            0.0, 1.0, 0.0, 3.0,
+            0.0, 0.0, 1.0, 4.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        matrix4_equals(m, expected);
+    }
+
+    #[test]
+    fn test_from_rotation_x() {
+        let m = Matrix4::from_rotation_x(PI / 6.0);
+
+        let cos = 3.0f32.sqrt() / 2.0;
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1.0, 0.0, 0.0, 0.0,
+            0.0, cos, -0.5, 0.0,
+            0.0, 0.5, cos, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        matrix4_equals(m, expected);
+    }
+
+    #[test]
+    fn test_from_rotation_y() {
+        let m = Matrix4::from_rotation_y(PI / 6.0);
+
+        let cos = 3.0f32.sqrt() / 2.0;
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            cos, 0.0, 0.5, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            -0.5, 0.0, cos, 0.0,
+            0.0, 0.0, 0.0, 1.0 
+        );
+
+        matrix4_equals(m, expected);
+    }
+
+    #[test]
+    fn test_from_rotation_z() {
+        let m = Matrix4::from_rotation_z(PI / 6.0);
+
+        let cos = 3.0f32.sqrt() / 2.0;
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            cos, -0.5, 0.0, 0.0,
+            0.5, cos, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        matrix4_equals(m, expected);
+    }
+
+    #[test]
+    fn test_from_euler() {
+        let test_values = [
+            Euler {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                order: EulerOrder::Xyz,
+            },
+            Euler {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+                order: EulerOrder::Xyz,
+            },
+            Euler {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+                order: EulerOrder::Zyx,
+            },
+            Euler {
+                x: 0.0,
+                y: 0.0,
+                z: 0.5,
+                order: EulerOrder::Yzx,
+            },
+            Euler {
+                x: 0.0,
+                y: 0.0,
+                z: -0.5,
+                order: EulerOrder::Yzx,
+            },
+        ];
+
+        for euler in test_values {
+            let m = Matrix4::from_euler(&euler);
+            let m2 = Matrix4::from_euler(&Euler::from_rotation_matrix(&m, euler.order));
+
+            matrix4_equals(m, m2);
+        }
+    }
+
+    #[test]
+    fn test_from_scale() {
+        let m = Matrix4::from_scale(&Vector3 {
+            x: 2.0,
+            y: 3.0,
+            z: 4.0,
+        });
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            2.0, 0.0, 0.0, 0.0,
+            0.0, 3.0, 0.0, 0.0,
+            0.0, 0.0, 4.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        matrix4_equals(m, expected);
+    }
+
+    #[test]
+    fn test_look_at() {
+        let m = Matrix4::look_at(
+            &Vector3::default(),
+            &(0.0, 1.0, -1.0).into(),
+            &(0.0, 1.0, 0.0).into(),
+        );
+
+        let rotation_xyz = Euler::from_rotation_matrix(&m, EulerOrder::Xyz);
+
+        assert_float_absolute_eq!(rotation_xyz.x * (180.0 / PI), 45.0);
+    }
+
+    #[test]
+    fn test_set() {
         #[rustfmt::skip]
         let mut m = Matrix4::new(
             1.0, 2.0, 3.0, 4.0,
@@ -688,38 +859,20 @@ mod tests {
     }
 
     #[test]
-    fn identity() {
-        let m = Matrix4::identity();
-
-        for i in 0..16 {
-            assert_eq!(m.elements[i], if i % 5 == 0 { 1.0 } else { 0.0 });
-        }
-    }
-
-    #[test]
-    fn zero() {
-        let m = Matrix4::zero();
-
-        for i in 0..16 {
-            assert_eq!(m.elements[i], 0.0);
-        }
-    }
-
-    #[test]
-    fn translation() {
+    fn test_translation() {
         #[rustfmt::skip]
-    let m = Matrix4::new(
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 2.0,
-        0.0, 0.0, 1.0, 3.0,
-        0.0, 0.0, 0.0, 1.0,
-    );
+        let m = Matrix4::new(
+            1.0, 0.0, 0.0, 1.0,
+            0.0, 1.0, 0.0, 2.0,
+            0.0, 0.0, 1.0, 3.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
 
         assert_eq!(m.translation(), (1.0, 2.0, 3.0).into());
     }
 
     #[test]
-    fn translate() {
+    fn test_translate() {
         let mut m = Matrix4::identity();
 
         m.translate(&(1.0, 2.0, 3.0).into());
@@ -728,129 +881,115 @@ mod tests {
     }
 
     #[test]
-    fn multiply() {
+    fn test_matrix_multiplication() {
         #[rustfmt::skip]
-    let mut a = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        let mut a = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
 
         #[rustfmt::skip]
-    let b = Matrix4::new(
-        17.0, 18.0, 19.0, 20.0,
-        21.0, 22.0, 23.0, 24.0,
-        25.0, 26.0, 27.0, 28.0,
-        29.0, 30.0, 31.0, 32.0,
-    );
+        let b = Matrix4::new(
+            17.0, 18.0, 19.0, 20.0,
+            21.0, 22.0, 23.0, 24.0,
+            25.0, 26.0, 27.0, 28.0,
+            29.0, 30.0, 31.0, 32.0,
+        );
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            250.0, 260.0, 270.0, 280.0,
+            618.0, 644.0, 670.0, 696.0,
+            986.0, 1028.0, 1070.0, 1112.0,
+            1354.0, 1412.0, 1470.0, 1528.0
+        );
+
+        let a_mul_b = a * b;
+        matrix4_equals(a_mul_b, expected);
 
         a *= b;
-
-        assert_eq!(a.elements[0], 250.0);
-        assert_eq!(a.elements[1], 618.0);
-        assert_eq!(a.elements[2], 986.0);
-        assert_eq!(a.elements[3], 1354.0);
-        assert_eq!(a.elements[4], 260.0);
-        assert_eq!(a.elements[5], 644.0);
-        assert_eq!(a.elements[6], 1028.0);
-        assert_eq!(a.elements[7], 1412.0);
-        assert_eq!(a.elements[8], 270.0);
-        assert_eq!(a.elements[9], 670.0);
-        assert_eq!(a.elements[10], 1070.0);
-        assert_eq!(a.elements[11], 1470.0);
-        assert_eq!(a.elements[12], 280.0);
-        assert_eq!(a.elements[13], 696.0);
-        assert_eq!(a.elements[14], 1112.0);
-        assert_eq!(a.elements[15], 1528.0);
+        matrix4_equals(a, expected);
     }
 
     #[test]
-    fn multiply_matrices() {
+    fn test_matrix_scalar_multiplication() {
         #[rustfmt::skip]
-    let a = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        let mut m = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
 
-        #[rustfmt::skip]
-    let b = Matrix4::new(
-        17.0, 18.0, 19.0, 20.0,
-        21.0, 22.0, 23.0, 24.0,
-        25.0, 26.0, 27.0, 28.0,
-        29.0, 30.0, 31.0, 32.0,
-    );
+        let m2 = m * 2.0;
 
-        let c = a * b;
-
-        assert_eq!(c.elements[0], 250.0);
-        assert_eq!(c.elements[1], 618.0);
-        assert_eq!(c.elements[2], 986.0);
-        assert_eq!(c.elements[3], 1354.0);
-        assert_eq!(c.elements[4], 260.0);
-        assert_eq!(c.elements[5], 644.0);
-        assert_eq!(c.elements[6], 1028.0);
-        assert_eq!(c.elements[7], 1412.0);
-        assert_eq!(c.elements[8], 270.0);
-        assert_eq!(c.elements[9], 670.0);
-        assert_eq!(c.elements[10], 1070.0);
-        assert_eq!(c.elements[11], 1470.0);
-        assert_eq!(c.elements[12], 280.0);
-        assert_eq!(c.elements[13], 696.0);
-        assert_eq!(c.elements[14], 1112.0);
-        assert_eq!(c.elements[15], 1528.0);
-    }
-
-    #[test]
-    fn multiply_scalar() {
-        #[rustfmt::skip]
-    let mut m = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        for i in 0..16 {
+            assert_float_absolute_eq!(m2.elements[i], ((cm_to_rm(i) + 1) * 2) as f32);
+        }
 
         m *= 2.0;
 
         for i in 0..16 {
-            assert_eq!(m.elements[i], ((cm_to_rm(i) + 1) * 2) as f32);
+            assert_float_absolute_eq!(m.elements[i], ((cm_to_rm(i) + 1) * 2) as f32);
         }
     }
 
     #[test]
-    fn determinant() {
+    fn test_matrix_scalar_division() {
         #[rustfmt::skip]
-    let m = Matrix4::new(
-        2.0, -3.0, 1.0, 5.0,
-        4.0, 0.0, -2.0, 1.0,
-        -1.0, 2.0, 3.0, 4.0,
-        3.0, 1.0, 2.0, -2.0,
-    );
+        let mut m = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
+
+        let m2 = m / 2.0;
+
+        for i in 0..16 {
+            assert_float_absolute_eq!(m2.elements[i], (cm_to_rm(i) + 1) as f32 / 2.0);
+        }
+
+        m /= 2.0;
+
+        for i in 0..16 {
+            assert_float_absolute_eq!(m.elements[i], (cm_to_rm(i) + 1) as f32 / 2.0);
+        }
+    }
+
+    #[test]
+    fn test_determinant() {
+        #[rustfmt::skip]
+        let m = Matrix4::new(
+            2.0, -3.0, 1.0, 5.0,
+            4.0, 0.0, -2.0, 1.0,
+            -1.0, 2.0, 3.0, 4.0,
+            3.0, 1.0, 2.0, -2.0,
+        );
 
         #[rustfmt::skip]
-    let degenerate = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        let degenerate = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
 
-        assert_eq!(m.determinant(), -420.0);
+        assert_float_absolute_eq!(m.determinant(), -420.0);
         assert_eq!(degenerate.determinant(), 0.0);
     }
 
     #[test]
-    fn inverse() {
+    fn test_inverse() {
         #[rustfmt::skip]
-    let m = Matrix4::new(
-        0.0, 0.0, -1.0, 2.0,
-        0.0, 1.0, 0.0, 0.0,
-        9.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    );
+        let m = Matrix4::new(
+            0.0, 0.0, -1.0, 2.0,
+            0.0, 1.0, 0.0, 0.0,
+            9.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
 
         let i = m.inverse();
 
@@ -872,13 +1011,13 @@ mod tests {
         assert_eq!(i.elements[15], 1.0);
 
         #[rustfmt::skip]
-    let degenerate = Matrix4::new(
-        1.0, 2.0, 3.0, 4.0,
-        5.0, 6.0, 7.0, 8.0,
-        9.0, 10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0, 16.0,
-    );
+        let degenerate = Matrix4::new(
+            1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0,
+            9.0, 10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0, 16.0,
+        );
 
-        assert_eq!(degenerate.inverse(), Matrix4::zero());
+        matrix4_equals(degenerate.inverse(), Matrix4::zero());
     }
 }
