@@ -194,6 +194,7 @@ impl Matrix3 {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -208,11 +209,11 @@ mod tests {
     #[test]
     fn new() {
         #[rustfmt::skip]
-    let m = Matrix3::new(
-        1.0, 2.0, 3.0,
-        4.0, 5.0, 6.0,
-        7.0, 8.0, 9.0,
-    );
+        let m = Matrix3::new(
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+            7.0, 8.0, 9.0,
+        );
 
         for i in 0..9 {
             assert_eq!(m.elements[i], (cm_to_rm(i) + 1) as f32)
@@ -222,18 +223,18 @@ mod tests {
     #[test]
     fn set() {
         #[rustfmt::skip]
-    let mut m = Matrix3::new(
-        1.0, 2.0, 3.0,
-        4.0, 5.0, 6.0,
-        7.0, 8.0, 9.0,
-    );
+        let mut m = Matrix3::new(
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+            7.0, 8.0, 9.0,
+        );
 
         #[rustfmt::skip]
-    m.set(
-        10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0,
-        16.0, 17.0, 18.0,
-    );
+        m.set(
+            10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0,
+            16.0, 17.0, 18.0,
+        );
 
         for i in 0..9 {
             assert_eq!(m.elements[i], (cm_to_rm(i) + 10) as f32);
@@ -243,18 +244,18 @@ mod tests {
     #[test]
     fn copy() {
         #[rustfmt::skip]
-    let mut a = Matrix3::new(
-        1.0, 2.0, 3.0,
-        4.0, 5.0, 6.0,
-        7.0, 8.0, 9.0,
-    );
+        let mut a = Matrix3::new(
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+            7.0, 8.0, 9.0,
+        );
 
         #[rustfmt::skip]
-    let b = Matrix3::new(
-        10.0, 11.0, 12.0,
-        13.0, 14.0, 15.0,
-        16.0, 17.0, 18.0,
-    );
+        let b = Matrix3::new(
+            10.0, 11.0, 12.0,
+            13.0, 14.0, 15.0,
+            16.0, 17.0, 18.0,
+        );
 
         a.copy(&b);
 
@@ -295,22 +296,22 @@ mod tests {
         assert_eq!(m.determinant(), 0.0);
 
         #[rustfmt::skip]
-    m.set(
-        2.0, 3.0, 4.0,
-        5.0, 13.0, 7.0,
-        8.0, 9.0, 11.0
-    );
+        m.set(
+            2.0, 3.0, 4.0,
+            5.0, 13.0, 7.0,
+            8.0, 9.0, 11.0
+        );
         assert_eq!(m.determinant(), -73.0);
     }
 
     #[test]
     fn transpose() {
         #[rustfmt::skip]
-    let m = Matrix3::new(
-        1.0, 2.0, 3.0,
-        4.0, 5.0, 6.0,
-        7.0, 8.0, 9.0
-    );
+        let m = Matrix3::new(
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+            7.0, 8.0, 9.0
+        );
         let expected = Matrix3 {
             elements: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         };
@@ -321,27 +322,27 @@ mod tests {
     #[test]
     fn inverse() {
         #[rustfmt::skip]
-    let m = Matrix3::new(
-        1.0, 2.0, 3.0,
-        0.0, 1.0, 4.0,
-        5.0, 6.0, 0.0
-    );
+        let m = Matrix3::new(
+            1.0, 2.0, 3.0,
+            0.0, 1.0, 4.0,
+            5.0, 6.0, 0.0
+        );
 
         #[rustfmt::skip]
-    let expected = Matrix3::new(
-        -24.0, 18.0, 5.0,
-        20.0, -15.0, -4.0,
-        -5.0, 4.0, 1.0,
-    );
+        let expected = Matrix3::new(
+            -24.0, 18.0, 5.0,
+            20.0, -15.0, -4.0,
+            -5.0, 4.0, 1.0,
+        );
 
         assert_eq!(m.inverse(), expected);
 
         #[rustfmt::skip]
-    let degenerate = Matrix3::new(
-        1.0, 2.0, 3.0,
-        4.0, 5.0, 6.0,
-        7.0, 8.0, 9.0,
-    );
+        let degenerate = Matrix3::new(
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+            7.0, 8.0, 9.0,
+        );
 
         assert_eq!(degenerate.inverse(), Matrix3::zero());
     }
