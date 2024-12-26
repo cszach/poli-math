@@ -5,9 +5,6 @@ use crate::Vector3;
 use super::Matrix4;
 
 /// 3x3 matrix.
-///
-/// Note that elements are stored in column-major order due to the fact that
-/// the WebGPU Shading Language uses column-major ordering.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Matrix3 {
