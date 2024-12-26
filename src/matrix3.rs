@@ -325,15 +325,9 @@ mod tests {
             -5.0, 4.0, 1.0
         );
 
-        assert_float_absolute_eq!(actual.elements[0], expected.elements[0]);
-        assert_float_absolute_eq!(actual.elements[1], expected.elements[1]);
-        assert_float_absolute_eq!(actual.elements[2], expected.elements[2]);
-        assert_float_absolute_eq!(actual.elements[3], expected.elements[3]);
-        assert_float_absolute_eq!(actual.elements[4], expected.elements[4]);
-        assert_float_absolute_eq!(actual.elements[5], expected.elements[5]);
-        assert_float_absolute_eq!(actual.elements[6], expected.elements[6]);
-        assert_float_absolute_eq!(actual.elements[7], expected.elements[7]);
-        assert_float_absolute_eq!(actual.elements[8], expected.elements[8]);
+        for i in 0..9 {
+            assert_float_absolute_eq!(actual.elements[i], expected.elements[i]);
+        }
     }
 
     #[test]
